@@ -238,6 +238,31 @@ const d=sourceData, root=document.getElementById('app');let idx=0;let ans={};let
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nl=s=>E(s).replace(/\n/g,'<br>');
 function button(id,t,cls=''){return `<button type="button" id="${id}" class="btn ${cls}">${t}</button>`}
+/* JPN: Wajib lengkapkan setiap item sebelum butang Seterusnya / Selesai. */
+let jpnOrderTouched=Object.create(null);
+function jpnIsAnswered(it){
+ const v=ans[it.id];
+ if(it.type==='order')return jpnOrderTouched[it.id]===true&&Array.isArray(v)&&v.length===(it.options||[]).length;
+ if(it.type==='single'||it.type==='text'||it.type==='number')return String(v??'').trim()!=='';
+ if(it.type==='multi')return Array.isArray(v)&&v.length>0;
+ if(it.type==='match')return Array.isArray(v)&&v.length===(it.options||[]).length&&v.every(x=>String(x??'').trim()!=='');
+ return Array.isArray(v)?v.length>0:String(v??'').trim()!=='';
+}
+function jpnHideRequired(){const n=document.getElementById('jpn-required-message');if(n)n.remove();}
+function jpnWarnRequired(){
+ jpnHideRequired();const box=document.getElementById('response');if(!box)return;
+ const msg=document.createElement('div');msg.id='jpn-required-message';msg.setAttribute('role','alert');
+ msg.style.cssText='margin:12px 0;padding:12px 14px;background:#fff1e5;border:2px solid #d25e0d;border-radius:12px;color:#7c2d12;font-weight:700;line-height:1.5';
+ msg.textContent='⚠️ Sila lengkapkan jawapan soalan ini dahulu. Jawapan tidak semestinya betul.';
+ box.insertAdjacentElement('afterend',msg);msg.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function jpnGoNext(it){
+ capture(it);
+ if(it&&!jpnIsAnswered(it)){jpnWarnRequired();return;}
+ if(it&&idx===d.items.length&&!d.items.every(jpnIsAnswered)){jpnWarnRequired();return;}
+ idx++;render();
+}
+window.JPN_V2_ALL_COMPLETE=function(){return d.items.every(jpnIsAnswered);};
 function capture(it){if(!it)return;const box=document.getElementById('response');if(!box)return;let o=it.options||[];
 if(it.type==='single')ans[it.id]=o[Number(box.querySelector('input:checked')?.value)]||'';
 else if(it.type==='multi')ans[it.id]=[...box.querySelectorAll('input:checked')].map(x=>o[Number(x.value)]);
@@ -259,7 +284,7 @@ function response(it){let o=it.options||[],v=ans[it.id];if(it.type==='single'||i
 if(it.type==='order')return `<p class="muted">Gunakan butang NAIK dan TURUN yang berwarna untuk menyusun kad planet.</p><div class="cards" id="cards"></div>`;
 if(it.type==='match')return o.map((x,j)=>`<label>${E(x.split('|')[0]||'Pasangan '+(j+1))}<select data-match="${j}" class="field"><option value="">Pilih pasangan</option>${o.map(y=>{const z=y.split('|')[1]||y;return `<option ${v&&v[j]===z?'selected':''}>${E(z)}</option>`}).join('')}</select></label>`).join('');
 return it.type==='number'?`<input class="field" type="text" inputmode="decimal" aria-label="Jawapan nombor" value="${E(v||'')}" placeholder="Masukkan nombor sahaja">`:`<textarea class="field textarea" aria-label="Jawapan bertulis" placeholder="Tulis jawapan anda">${E(v||'')}</textarea>`;}
-function paintCards(it){const o=it.options||[],c=cards[it.id]||(cards[it.id]=Array.isArray(ans[it.id])?ans[it.id].slice():o.slice());const box=document.getElementById('cards');if(!box)return;box.innerHTML=c.map((x,j)=>`<div class="planet-card"><span class="card-label">${E(x)}</span><button type="button" class="btn reorder-btn reorder-up" data-dir="-1" data-i="${j}" ${j===0?'disabled':''} aria-label="Naikkan ${E(x)}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg><span>NAIK</span></button><button type="button" class="btn reorder-btn reorder-down" data-dir="1" data-i="${j}" ${j===c.length-1?'disabled':''} aria-label="Turunkan ${E(x)}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg><span>TURUN</span></button></div>`).join('');box.querySelectorAll('button').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.i),j=i+Number(b.dataset.dir);[c[i],c[j]]=[c[j],c[i]];ans[it.id]=c.slice();checked[it.id]=false;paintCards(it);document.getElementById('result').innerHTML='';});}
+function paintCards(it){const o=it.options||[],c=cards[it.id]||(cards[it.id]=Array.isArray(ans[it.id])?ans[it.id].slice():o.slice());const box=document.getElementById('cards');if(!box)return;box.innerHTML=c.map((x,j)=>`<div class="planet-card"><span class="card-label">${E(x)}</span><button type="button" class="btn reorder-btn reorder-up" data-dir="-1" data-i="${j}" ${j===0?'disabled':''} aria-label="Naikkan ${E(x)}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg><span>NAIK</span></button><button type="button" class="btn reorder-btn reorder-down" data-dir="1" data-i="${j}" ${j===c.length-1?'disabled':''} aria-label="Turunkan ${E(x)}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg><span>TURUN</span></button></div>`).join('');box.querySelectorAll('button').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.i),j=i+Number(b.dataset.dir);[c[i],c[j]]=[c[j],c[i]];ans[it.id]=c.slice();jpnOrderTouched[it.id]=true;jpnHideRequired();checked[it.id]=false;paintCards(it);document.getElementById('result').innerHTML='';});}
 
 let simFrame=0,simComplete=false;
 function orbitSimulation(){return `<div class="orbit-sim"><div class="orbit-key"><span>🔵 Bumi</span><span>🟠 Marikh</span><span>☀️ Matahari</span></div><svg id="orbitSvg" viewBox="0 0 420 250" role="img" aria-label="Model pergerakan Bumi dan Marikh mengelilingi Matahari"><g fill="#fff" opacity=".65"><circle cx="28" cy="28" r="2"/><circle cx="380" cy="42" r="2"/><circle cx="45" cy="212" r="1.5"/><circle cx="337" cy="213" r="1.8"/></g><ellipse cx="210" cy="125" rx="95" ry="65" stroke="#39c9ff" stroke-width="3" stroke-dasharray="8 5" fill="none"/><ellipse cx="210" cy="125" rx="172" ry="105" stroke="#ffae8e" stroke-width="3" stroke-dasharray="8 5" fill="none"/><circle cx="210" cy="125" r="29" fill="#ffbd29" stroke="#ffeaaa" stroke-width="5"/><text x="210" y="170" text-anchor="middle" font-size="17" fill="#ffe7a1" font-weight="800">Matahari</text><circle cx="305" cy="125" r="15" fill="none" stroke="#32cfff" stroke-dasharray="4 4" stroke-width="3"/><circle cx="382" cy="125" r="13" fill="none" stroke="#ffc09f" stroke-dasharray="4 4" stroke-width="3"/><circle id="planetEarth" cx="305" cy="125" r="13" fill="#159cf0" stroke="#c8f6ff" stroke-width="3"/><circle id="planetMars" cx="382" cy="125" r="11" fill="#e5774e" stroke="#ffdbbc" stroke-width="3"/></svg><div class="orbit-actions"><span id="orbitLabel" class="orbit-label">Model belum dijalankan</span><button type="button" id="startOrbit" class="orbit-action">▶ Jalankan Animasi</button></div></div>`}
@@ -270,9 +295,9 @@ let main;if(isIntro){main=`<div class="intro-shell"><div class="panel"><span cla
 else if(isEnd){main=`<div class="intro-shell"><div class="panel complete-panel"><span class="pill">Misi Selesai!</span><h2>Syabas! 🌟</h2><p class="introtext">${E(d.ending||'Terima kasih kerana melengkapkan tugasan.')}</p></div></div>`}
 else{main=`<div class="grid"><section class="panel stimulus" aria-label="Stimulus Interaktif"><h2>Stimulus Interaktif</h2><div class="stimulus-stage">${idx===d.items.length?orbitSimulation():(it.image?`<img src="${it.image}" alt="Ilustrasi ${E(it.title)}">`:'')}<div class="desc"><p>${nl(it.context)}</p></div></div></section><section class="panel question" aria-label="Soalan"><span class="pill">Item ${idx} / ${d.items.length}</span><h2>${E(it.title||'Langkah '+idx)}</h2><p class="statement">${E(it.prompt)}</p><div id="response">${response(it)}</div><div id="result"></div></section></div>`}
 root.innerHTML=`<div class="main">${main}</div><div class="footer"><span class="step">${isIntro?'Pengenalan':isEnd?'Selesai':`Langkah ${idx} daripada ${d.items.length}`}</span><div class="buttons" style="margin-top:0">${isEnd?`${button('home','Halaman Utama','secondary')}${button('restart','Cuba Semula')}`:`${button('back','Kembali','secondary')}${button('next',idx===d.items.length?'Selesai':'Seterusnya')}`}</div></div>`;
-if(isEnd){document.getElementById('home').onclick=()=>{idx=0;render()};document.getElementById('restart').onclick=()=>{idx=0;ans={};checked={};cards={};render()};}else{const back=document.getElementById('back'),next=document.getElementById('next');back.disabled=isIntro;back.onclick=()=>{capture(it);idx--;render()};next.onclick=()=>{capture(it);idx++;render()};}
+if(isEnd){document.getElementById('home').onclick=()=>{idx=0;render()};document.getElementById('restart').onclick=()=>{idx=0;ans={};checked={};cards={};jpnOrderTouched=Object.create(null);render()};}else{const back=document.getElementById('back'),next=document.getElementById('next');back.disabled=isIntro;back.onclick=()=>{capture(it);idx--;render()};next.onclick=()=>jpnGoNext(it);}
 if(it){if(idx===d.items.length){const startBtn=document.getElementById('startOrbit');if(startBtn)startBtn.onclick=startOrbit;}if(it.type==='order')paintCards(it);
-const box=document.getElementById('response');box.addEventListener('input',()=>{capture(it);checked[it.id]=false;document.getElementById('result').innerHTML=''});box.addEventListener('change',()=>{capture(it);checked[it.id]=false;document.getElementById('result').innerHTML=''});
+const box=document.getElementById('response');box.addEventListener('input',()=>{capture(it);jpnHideRequired();checked[it.id]=false;document.getElementById('result').innerHTML=''});box.addEventListener('change',()=>{capture(it);jpnHideRequired();checked[it.id]=false;document.getElementById('result').innerHTML=''});
 }
 }
 render();
@@ -304,7 +329,7 @@ window.JPN_V2_EXPORT=function(){return {unitId:'SCI001',version:'psi-v1',page:id
  }
  function respond(){
    if(!hostOrigin||!hostNonce)return;
-   const result=get();if(!result||result.page!==5)return;
+   const result=get();if(!result||result.page!==5||window.JPN_V2_ALL_COMPLETE?.()!==true)return;
    window.parent.postMessage({type:'JPN_V2_COMPLETE',nonce:hostNonce,moduleId:'SCI001',response:result},hostOrigin);
  }
  window.addEventListener('message',function(event){

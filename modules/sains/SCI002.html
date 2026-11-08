@@ -285,7 +285,32 @@ function response(it){const o=it.options||[],v=ans[it.id];
 }
 function drawOrder(it){const box=document.getElementById('cards');if(!box)return;const c=orders[it.id]||(orders[it.id]=Array.isArray(ans[it.id])?ans[it.id].slice():it.options.slice());
  box.innerHTML=c.map((x,j)=>`<div class="planet-card"><span class="card-label">${E(x)}</span><button type="button" class="btn reorder-btn reorder-up" data-i="${j}" data-dir="-1" ${j===0?'disabled':''} aria-label="Naikkan ${E(x)}">▲ NAIK</button><button type="button" class="btn reorder-btn reorder-down" data-i="${j}" data-dir="1" ${j===c.length-1?'disabled':''} aria-label="Turunkan ${E(x)}">▼ TURUN</button></div>`).join('');
- box.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{let i=+b.dataset.i,j=i+(+b.dataset.dir);[c[i],c[j]]=[c[j],c[i]];ans[it.id]=c.slice();drawOrder(it)}));
+ box.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{let i=+b.dataset.i,j=i+(+b.dataset.dir);[c[i],c[j]]=[c[j],c[i]];ans[it.id]=c.slice();jpnOrderTouched[it.id]=true;jpnHideRequired();drawOrder(it)}));
+}
+/* Kawalan wajib jawab: semua jenis item termasuk padanan dan susunan kad. */
+let jpnOrderTouched = Object.create(null);
+function jpnIsAnswered(it){
+ const v=ans[it.id];
+ if(it.type==='order')return jpnOrderTouched[it.id]===true && Array.isArray(v) && v.length===(it.options||[]).length;
+ if(it.type==='single'||it.type==='number'||it.type==='text')return String(v??'').trim().length>0;
+ if(it.type==='multi')return Array.isArray(v)&&v.length>0;
+ if(it.type==='match')return Array.isArray(v)&&v.length===(it.options||[]).length&&v.every(x=>String(x??'').trim()!=='');
+ return Array.isArray(v)?v.length>0:v!==null&&v!==undefined&&String(v).trim()!=='';
+}
+function jpnWarnRequired(it){
+ const box=document.getElementById('response');if(!box)return;
+ const old=document.getElementById('jpn-required-message');if(old)old.remove();
+ box.insertAdjacentHTML('afterend','<div id="jpn-required-message" role="alert" style="margin-top:12px;padding:12px 14px;background:#fff1e5;border:2px solid #d25e0d;border-radius:12px;color:#7c2d12;font-weight:700;line-height:1.5">⚠️ Sila lengkapkan jawapan soalan ini sebelum meneruskan. Jawapan tidak semestinya betul.</div>');
+}
+function jpnHideRequired(){const x=document.getElementById('jpn-required-message');if(x)x.remove();}
+function jpnGoNext(it){
+ capture(it);
+ if(it&&!jpnIsAnswered(it)){jpnWarnRequired(it);return;}
+ if(it && idx===d.items.length){
+   const missing=d.items.find(x=>!jpnIsAnswered(x));
+   if(missing){jpnWarnRequired(it);return;}
+ }
+ idx++;render();
 }
 function capture(it){if(!it)return;const box=document.getElementById('response');if(!box)return;const o=it.options||[];
  if(it.type==='single'){const chosen=box.querySelector('input:checked');ans[it.id]=chosen?o[+chosen.value]:'';}
@@ -301,11 +326,12 @@ function render(){const it=d.items[idx-1],isIntro=idx===0,isEnd=idx>d.items.leng
  else if(isEnd)contents=`<div class="intro-shell"><section class="panel complete-panel"><span class="pill">Misi Selesai!</span><h2>Syabas! 🌿</h2><p>${nl(d.ending||'Terima kasih kerana melengkapkan tugasan.')}</p></section></div>`;
  else contents=`<div class="grid"><section class="panel stimulus" aria-label="Bahan rangsangan"><h2>🌿 Bahan Rangsangan</h2><div class="stimulus-stage ${it.image?'':'no-image'}">${it.image?`<img src="${it.image}" alt="Bahan rangsangan ${E(it.title)}">`:''}<div class="desc"><p>${nl(it.context)}</p></div></div></section><section class="panel question" aria-label="Soalan"><span class="pill">Cabaran ${idx} / ${d.items.length}</span><h2>${E(it.title)}</h2><p class="statement">${E(it.prompt)}</p><div id="response">${response(it)}</div></section></div>`;
  document.getElementById('app').innerHTML=`<div class="main">${contents}</div><footer class="footer"><span class="step">${isIntro?'Pengenalan':isEnd?'Selesai':`Langkah ${idx} daripada ${d.items.length}`}</span><div class="buttons">${isEnd?`${button('home','Halaman Utama',true)}${button('restart','Cuba Semula')}`:`${button('back','Kembali',true)}${button('next',idx===d.items.length?'Selesai':'Seterusnya')}`}</div></footer>`;
- if(isEnd){document.getElementById('home').onclick=()=>{idx=0;render()};document.getElementById('restart').onclick=()=>{idx=0;ans={};orders={};render()};}
- else{const b=document.getElementById('back');b.disabled=isIntro;b.onclick=()=>{capture(it);idx--;render()};document.getElementById('next').onclick=()=>{capture(it);idx++;render()};}
- if(it){if(it.type==='order')drawOrder(it);const box=document.getElementById('response');box.addEventListener('input',()=>capture(it));box.addEventListener('change',()=>capture(it));}
+ if(isEnd){document.getElementById('home').onclick=()=>{idx=0;render()};document.getElementById('restart').onclick=()=>{idx=0;ans={};orders={};jpnOrderTouched=Object.create(null);render()};}
+ else{const b=document.getElementById('back');b.disabled=isIntro;b.onclick=()=>{capture(it);idx--;render()};document.getElementById('next').onclick=()=>jpnGoNext(it);}
+ if(it){if(it.type==='order')drawOrder(it);const box=document.getElementById('response');box.addEventListener('input',()=>{capture(it);jpnHideRequired()});box.addEventListener('change',()=>{capture(it);jpnHideRequired()});}
 }
 render();
+window.JPN_V2_ALL_COMPLETE=function(){return d.items.every(jpnIsAnswered);};
 /* JPN V2: akses baca sahaja kepada jawapan dan halaman semasa. */
 window.JPN_V2_EXPORT=function(){return {unitId:'SCI002',version:'psi-v1',page:idx>d.items.length?5:(idx===0?0:1),answers:JSON.parse(JSON.stringify(ans))};};
 
@@ -326,7 +352,7 @@ window.JPN_V2_EXPORT=function(){return {unitId:'SCI002',version:'psi-v1',page:id
  }
  function respond(){
    if(!hostOrigin||!hostNonce)return;
-   const result=get();if(!result||result.page!==5)return;
+   const result=get();if(!result||result.page!==5||window.JPN_V2_ALL_COMPLETE?.()!==true)return;
    window.parent.postMessage({type:'JPN_V2_COMPLETE',nonce:hostNonce,moduleId:'SCI002',response:result},hostOrigin);
  }
  window.addEventListener('message',function(event){
