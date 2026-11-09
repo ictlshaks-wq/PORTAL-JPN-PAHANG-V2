@@ -35,6 +35,44 @@ button,input{font:inherit}button{cursor:pointer}button:focus-visible,input:focus
 .footer{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;background:white;border-top:2px solid #cce4f7;border-radius:0 0 16px 16px;padding:7px 9px;gap:8px;min-height:55px}
 .steptext{font-size:14px;color:#064f82;font-weight:800}.actions{display:flex;gap:9px}.btn{background:var(--blue);color:white;border:1.5px solid var(--blue);border-radius:10px;padding:9px 16px;font-size:15px;font-weight:800;min-height:40px}.btn.secondary{background:#ecf6ff;color:#065187;border-color:#bddcf7}.btn:disabled{opacity:.43;cursor:not-allowed}
 @media(max-width:760px){.shell{padding:0;min-height:100dvh}.head{border-radius:0}.screen{overflow:auto;min-height:0}.grid,.intro-content{grid-template-columns:1fr;height:auto;overflow:visible}.panel{min-height:260px;overflow:visible}.panel-scroll{overflow:visible}.intro{height:auto;min-height:100%}.intro-left,.intro-right{min-height:200px;overflow:visible}.footer{border-radius:0}.object-item img{height:135px}}
+
+/* MAT003: pengoptimuman KHUSUS panel Bahan Rangsangan.
+   Kod JavaScript, kandungan, jenis jawapan dan navigasi dikekalkan. */
+@media (min-width:761px){
+  .stimulus .panel-scroll{display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;min-height:0}
+  .stimulus .stage{height:100%;min-height:100%;flex:1 0 auto;gap:10px}
+  .stimulus .paper{flex:0 0 auto;padding:12px 14px;border-width:2px}
+  .stimulus .paper h2{font-size:clamp(16px,1.25vw,19px);line-height:1.35;margin-bottom:8px}
+  .stimulus .paper p{font-size:clamp(14px,1.1vw,17px);line-height:1.5}
+  .stimulus .table{font-size:clamp(14px,1.1vw,16px)}
+  .stimulus .table th,.stimulus .table td{padding:8px 10px;line-height:1.42}
+  .stimulus .object-visual{flex:1 1 0;min-height:155px;min-width:0;display:flex;flex-direction:column;justify-content:center;align-items:stretch;padding:9px 12px}
+  .stimulus .object-row{height:100%;width:100%;min-height:0;align-items:stretch;gap:14px}
+  .stimulus .object-item{height:100%;min-height:0;justify-content:center;gap:6px}
+  .stimulus .object-item img{flex:1 1 auto;min-height:0;height:calc(100% - 28px);max-height:275px;width:100%;object-fit:contain}
+  .stimulus .object-item span{flex:0 0 auto;font-size:clamp(14px,1.08vw,16px);line-height:1.35}
+  .stimulus .object-visual.count-1 .object-item{max-width:460px}
+  /* Pengenalan: manfaatkan ruang tanpa mengubah kerangka 60:40. */
+  .intro-left .object-visual{flex:1 1 0;min-height:100px;display:flex;flex-direction:column;justify-content:center}
+  .intro-left .object-row{height:100%;min-height:0;align-items:stretch;gap:10px}
+  .intro-left .object-item{min-height:0;gap:5px}
+  .intro-left .object-item img{flex:1;min-height:0;width:100%;height:calc(100% - 25px);max-height:210px;object-fit:contain}
+  .intro-left .object-item span{font-size:14px}
+}
+@media (min-width:761px) and (max-height:680px){
+  .stimulus .stage{gap:7px}
+  .stimulus .paper{padding:8px 10px}
+  .stimulus .table th,.stimulus .table td{padding:5px 7px}
+  .stimulus .object-visual{min-height:105px;padding:6px}
+  .stimulus .object-item img{max-height:195px}
+}
+@media (max-width:760px){
+  .stimulus .object-visual{padding:10px;display:flex;flex-direction:column}
+  .stimulus .object-row{gap:8px}
+  .stimulus .object-item img{height:clamp(135px,24vh,220px);max-width:100%;object-fit:contain}
+  .stimulus .table{font-size:14px}
+  .stimulus .table th,.stimulus .table td{padding:7px 8px}
+}
 </style></head><body><main class="shell"><header class="head"><strong>Misi Bijak Wang</strong><small>Matematik · Tahun 3 · Item Interaktif</small></header><div class="screen" id="screen"></div><footer class="footer" id="footer"></footer></main>
 <script>
 
